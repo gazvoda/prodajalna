@@ -26,6 +26,18 @@ streznik.use(
   })
 );
 
+// Preusmeritev ce ni prijave
+streznik.get('/', function(zahteva, odgovor) {
+  //console.log(zahteva.session);
+  //console.log(zahteva.params);
+  //console.log(zahteva.session.kosarica);
+  if (!zahteva.session.stranka) {
+    
+  }
+   //if (!zahteva.params.FirstName)
+    //  odgovor.redirect('/prijava');
+});
+
 var razmerje_usd_eur = 0.877039116;
 
 function davcnaStopnja(izvajalec, zanr) {
@@ -241,8 +253,6 @@ streznik.post('/stranka', function(zahteva, odgovor) {
 streznik.post('/odjava', function(zahteva, odgovor) {
     odgovor.redirect('/prijava') 
 })
-
-
 
 streznik.listen(process.env.PORT, function() {
   console.log("Strežnik pognan!");
