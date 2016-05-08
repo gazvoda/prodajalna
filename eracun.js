@@ -178,6 +178,7 @@ streznik.get('/izpisiRacun/:oblika', function(zahteva, odgovor) {
         if (napaka) {
           odgovor.end();
         }
+        
         odgovor.setHeader('content-type', 'text/xml');
         odgovor.render('eslog', {
           vizualiziraj: zahteva.params.oblika == 'html' ? true : false,
