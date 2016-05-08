@@ -194,6 +194,7 @@ var vrniRacune = function(callback) {
     }
   );
 }
+
 var registracija = false;
 // Registracija novega uporabnika
 streznik.post('/prijava', function(zahteva, odgovor) {
