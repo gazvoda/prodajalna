@@ -47,30 +47,30 @@ function davcnaStopnja(izvajalec, zanr) {
 
 // Prikaz seznama pesmi na strani
 streznik.get('/', function(zahteva, odgovor) {
-  
+
   if (!zahteva.session.prijavaStranka) {
-    odgovor.redirect('/prijava');
+     odgovor.redirect('/prijava');
   } else {
     pb.all("SELECT Track.TrackId AS id, Track.Name AS pesem, \
-            Artist.Name AS izvajalec, Track.UnitPrice * " +
-            razmerje_usd_eur + " AS cena, \
-            COUNT(InvoiceLine.InvoiceId) AS steviloProdaj, \
-            Genre.Name AS zanr \
-            FROM Track, Album, Artist, InvoiceLine, Genre \
-            WHERE Track.AlbumId = Album.AlbumId AND \
-            Artist.ArtistId = Album.ArtistId AND \
-            InvoiceLine.TrackId = Track.TrackId AND \
-            Track.GenreId = Genre.GenreId \
-            GROUP BY Track.TrackId \
-            ORDER BY steviloProdaj DESC, pesem ASC \
-            LIMIT 100", function(napaka, vrstice) {
-      if (napaka)
-        odgovor.sendStatus(500);
-      else {
-          for (var i=0; i<vrstice.length; i++)
-            vrstice[i].stopnja = davcnaStopnja(vrstice[i].izvajalec, vrstice[i].zanr);
-          odgovor.render('seznam', {seznamPesmi: vrstice});
-        }
+          Artist.Name AS izvajalec, Track.UnitPrice * " +
+          razmerje_usd_eur + " AS cena, \
+          COUNT(InvoiceLine.InvoiceId) AS steviloProdaj, \
+          Genre.Name AS zanr \
+          FROM Track, Album, Artist, InvoiceLine, Genre \
+          WHERE Track.AlbumId = Album.AlbumId AND \
+          Artist.ArtistId = Album.ArtistId AND \
+          InvoiceLine.TrackId = Track.TrackId AND \
+          Track.GenreId = Genre.GenreId \
+          GROUP BY Track.TrackId \
+          ORDER BY steviloProdaj DESC, pesem ASC \
+          LIMIT 100", function(napaka, vrstice) {
+    if (napaka)
+      odgovor.sendStatus(500);
+    else {
+        for (var i=0; i<vrstice.length; i++)
+          vrstice[i].stopnja = davcnaStopnja(vrstice[i].izvajalec, vrstice[i].zanr);
+        odgovor.render('seznam', {seznamPesmi: vrstice});
+      }
     })
   }
 })
@@ -158,7 +158,7 @@ var strankaIzRacuna = function(racunId, callback) {
 // Izpis računa v HTML predstavitvi na podlagi podatkov iz baze
 streznik.post('/izpisiRacunBaza', function(zahteva, odgovor) {
     var form = new formidable.IncomingForm();
-  
+    
     form.parse(zahteva, function (napaka1, polja, datoteke) {
       if (!napaka1) {
         
@@ -176,6 +176,16 @@ streznik.post('/izpisiRacunBaza', function(zahteva, odgovor) {
     });
 });
 
+var strankaPodatki = function(strankaId, callback) {
+   pb.all("SELECT * FROM Customer WHERE CustomerId = " + strankaId,
+    function(napaka, vrstice) {
+      if (!napaka) {
+        callback(napaka, vrstice); 
+      }
+    }
+  );
+}
+
 // Izpis računa v HTML predstavitvi ali izvorni XML obliki
 streznik.get('/izpisiRacun/:oblika', function(zahteva, odgovor) {
   pesmiIzKosarice(zahteva, function(pesmi) {
@@ -185,15 +195,21 @@ streznik.get('/izpisiRacun/:oblika', function(zahteva, odgovor) {
       odgovor.send("<p>V košarici nimate nobene pesmi, \
         zato računa ni mogoče pripraviti!</p>");
     } else {
-      
-      odgovor.setHeader('content-type', 'text/xml');
-      odgovor.render('eslog', {
-        vizualiziraj: zahteva.params.oblika == 'html' ? true : false,
-        postavkeRacuna: pesmi
-      })  
+      strankaPodatki(zahteva.session.prijavaStranka, function(napaka, stranka) {
+        if (napaka) {
+          odgovor.end();
+        }
+        
+        odgovor.setHeader('content-type', 'text/xml');
+        odgovor.render('eslog', {
+          vizualiziraj: zahteva.params.oblika == 'html' ? true : false,
+          postavkeRacuna: pesmi,
+          stranka: stranka[0]
+        });  
+      });
     }
-  })
-})
+  });
+});
 
 // Privzeto izpiši račun v HTML obliki
 streznik.get('/izpisiRacun', function(zahteva, odgovor) {
@@ -271,8 +287,6 @@ streznik.post('/stranka', function(zahteva, odgovor) {
   var form = new formidable.IncomingForm();
   
   form.parse(zahteva, function (napaka1, polja, datoteke) {
-    //console.log(polja);
-    //console.log(polja.seznamStrank);
     zahteva.session.prijavaStranka = polja.seznamStrank;
     odgovor.redirect('/')
   });
