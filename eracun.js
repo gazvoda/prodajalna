@@ -156,6 +156,7 @@ streznik.post('/izpisiRacunBaza', function(zahteva, odgovor) {
   
     form.parse(zahteva, function (napaka1, polja, datoteke) {
       if (!napaka1) {
+        
         pesmiIzRacuna(polja.seznamRacunov, function(pesmi) {
           strankaIzRacuna(polja.seznamRacunov, function(stranka) {
             odgovor.setHeader('content-type', 'text/xml');
